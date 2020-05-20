@@ -54,3 +54,11 @@
       '()
       (cons `(castexp ,(first inTs) ,(first zs))
             (insert-casts* (rest inTs) (rest zs)))))
+
+(define (castexp? e)
+  (eq? (first e) 'castexp))
+
+(define (casted-lambda? cast)
+  (match cast
+    [`(castexp ,t ,e) (or (lambda? e)
+                          (casted-lambda? e))]))

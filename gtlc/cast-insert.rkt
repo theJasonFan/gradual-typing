@@ -89,11 +89,6 @@
     [(? lambda?) #t]
     [(? castexp? c) (casted-lambda? c)]))
 
-;(define (clambda-funT e)
-;  (match e
-;    [(? lambda?) (lambda-funT e)]
-;    [`(castexp ,t ,e) t]))
-
 (define (make-binds vars vals)
   (if (empty? vars)
       '()

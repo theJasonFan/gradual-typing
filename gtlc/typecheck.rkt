@@ -60,7 +60,6 @@
 
 ;;TypeEnv Exp -> Type
 (define (judge G e)
-  (display e) (display "\n")
   (match e
     [(? number? x) 'num]
     [(? boolean? x) 'bool]
@@ -72,16 +71,7 @@
     [`(lambda ,funT (operands ,vs ...)  ,body) (GLam G funT vs body)]
     [`(apply ,f . ,args) (GApp G f args)]
     [`(if ,ec ,et ,ef) (GIf G ec et ef)]
-    [`(letrec (binds ,binds ...) ,e0) (GLetrec G binds e0)]
-    ;--------
-    [`(castexp ,castT ,e) (TCast G castT e)]
-    ))
-
-(define (TCast G castT e)
-  (let [(eT (judge G e))]
-    (if (consistent? castT eT)
-        castT
-        (error "TypeError-inconsistent-cast-type"))))
+    [`(letrec (binds ,binds ...) ,e0) (GLetrec G binds e0)]))
 
 (define (GLam-dyn G vs body)
   (let* ([inTs (map (λ _ 'dyn) vs)]
@@ -103,8 +93,6 @@
      (error "TypeError-function-type-dyn-not-allowed")]
     [_ (error "TypeError-DeclaredNotFun")]))
 
-;; Typing rules for apply
-;; Q: what about closures???
 (define (GApp G e args)
   (let ([te (judge G e)]
         [targs (map (judge-with G) args)])
@@ -113,13 +101,11 @@
     [(? funT?) (GApp2 e args te targs)]
     [_ (error "TypeError-ApplyNotFun")])))
 
-;; 
 (define (GApp2 e args te targs)
   (if (consistent?* (funT-inTs te) targs)
       (funT-outT te)
       (error "TypeError-TypeMismatch")))
       
-;; Typing rule for if
 (define (GIf G ec et ef)
   (let ([tc (judge G ec)]
         [tt (judge G et)]
@@ -129,38 +115,24 @@
             (if (eq? tt tf)
                 tt
                 'dyn)
-            (error "TypeError-InconsistentBranch" et ef)) ;;??? this is so weird to me... (if p "str" 1) type?
+            (error "TypeError-InconsistentBranch" et ef))
         (error "TypeError-PremiseTypeMismatch" ec))))
 
-(define (casted-lambda? cast)
-  (match cast
-    [`(castexp ,t ,e) (or (lambda? e)
-                          (casted-lambda? e))]))
-
-
-;;; TODO: letrec gets a bit weird when casts are involved
-;;; for now, we assume the cast type for G-new.
-(define (castexp? e)
-  (eq? (first e) 'castexp))
-
 (define (bind-lambda? b)
-  (match (third b)
-    [(? lambda?) #t]
-    [(? castexp? c) (casted-lambda? c)]))
+  (lambda? (third b)))
+
 
 (define (clambda-funT e)
   (match e
-    [(? lambda?) (lambda-funT e)]
-    [`(castexp ,t ,e) t]))
+    [(? lambda?) (lambda-funT e)]))
 
 (define (GLetrec G binds e)
-  (display "only lambdas can bind in letrec\n")
   (let*
       (;; evaluate the types
        [lambda-binds       (filter bind-lambda? binds)]
        [lambda-binds-vars    (map second lambda-binds)]
        [lambda-binds-vals (map third lambda-binds)]
-       [lambda-binds-assume-funTs (map clambda-funT lambda-binds-vals)]
+       [lambda-binds-assume-funTs (map lambda-funT lambda-binds-vals)]
        [G-new (env-extend* G lambda-binds-vars lambda-binds-assume-funTs)]
        [lambda-binds-funTs (map (judge-with G-new) lambda-binds-vals)]
     )

@@ -1,5 +1,4 @@
-#lang gtlc
-
+#lang gtlc/typecheck-only
 (letrec
   [(f (λ [dyn -> num] (x)
       (+ x 5)))]

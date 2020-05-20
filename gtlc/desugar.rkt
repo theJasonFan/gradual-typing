@@ -5,13 +5,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (desugar prog)
-  ;(display prog)
   (match prog
     [`(prog ,defines ... ,exp)
      `(letrec ,(cons 'binds
                      (map desugar-define defines))
         ,exp)]))
-    ;[`(prog ,exp) exp])
 
 (define (desugar-define define)
   (match define

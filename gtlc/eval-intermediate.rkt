@@ -12,7 +12,6 @@
   (eval e (env-initial)))
 
 (define (eval e env)
-  ;(begin (display e) (display "\n"))
   (match e
     [`(castexp ,cast ,e) (eval-cast cast e env)]
     [(? number? x) x]
@@ -27,8 +26,7 @@
                               (eval et env)
                               (eval ef env))]
     [`(letrec (binds ,binds ...) ,eb) (eval-letrec binds eb env)]
-    [`(let    (binds ,binds ...) ,eb) (eval-let binds eb env)]
-    
+    ;[`(let    (binds ,binds ...) ,eb) (eval-let binds eb env)]
     [`(lambda ,funT ,vs ,body) `(closure ,e ,env)] 
     [`(lambda ,vs ,body)       `(closure ,(lambda-insert-dyn-funT e) ,env)]
     [`(apply ,f . ,args) (apply-proc
@@ -77,10 +75,8 @@
         v
         (error "CastError" t γ))))
 
-;; Do we need this???
 (define (ECstU e env)
   (eval e env))
-;)
 
 ; a handy wrapper for Currying eval:
 (define (eval-with env)
@@ -97,24 +93,20 @@
     (eval body env*)))
 
 ; eval for let:
-(define (eval-let bindings body env)
-  (let* ((vars (map second bindings))
-         (exps (map third bindings))
-         (vals (map (eval-with env) exps))
-         (env* (env-extend* env vars vals)))
-    (eval body env*)))
+;(define (eval-let bindings body env)
+;  (let* ((vars (map second bindings))
+;         (exps (map third bindings))
+;         (vals (map (eval-with env) exps))
+;         (env* (env-extend* env vars vals)))
+;    (eval body env*)))
 
 ; applies a procedure to arguments:
 (define (apply-proc f values)
   (match f
-    ;; TODO: this case should never happen...
-    ;[`(closure (lambda (operands ,vs ...) ,body) ,env)
-     ; =>
-     ;(eval body (env-extend* env vs values))]
    [`(closure (lambda (funT ,ts ...) (operands ,vs ...) ,body) ,env)
      ; =>
      (eval body (env-extend* env vs values))]
     
-    [`(primitive ,p)
+   [`(primitive ,p)
      ; =>
      (apply p values)]))
