@@ -1,6 +1,6 @@
-#lang gtlc/cast-insert-only
+#lang gtlc
 
 (letrec
   [(f (λ [dyn -> num] (x)
-      (+ <num> x <num> 5)))]
-  (f <dyn> 20))
+      (+ x 5)))]
+  (f 20))
